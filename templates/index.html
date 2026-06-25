@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopAI — Intelligent Shopping Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<!-- ─── HEADER ──────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">✦</span>
+      <span class="logo-text">ShopAI</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-section="home">Home</button>
+      <button class="nav-btn" data-section="deals">🔥 Deals</button>
+      <button class="nav-btn" data-section="budget">Budget AI</button>
+      <button class="nav-btn" data-section="how">How It Works</button>
+      <button class="nav-btn" data-section="cart">Cart <span class="cart-badge" id="cartBadge">0</span></button>
+    </nav>
+  </div>
+</header>
+
+<!-- ─── HERO ────────────────────────────────────────────── -->
+<section class="hero" id="homeSection">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">✦ &nbsp;TF-IDF + Cosine Similarity Engine &nbsp;✦</p>
+    <h1 class="hero-title">Shop Smarter,<br /><em>Not Harder.</em></h1>
+    <p class="hero-subtitle">Select your interests, set a budget, and let our AI engine analyse 40 products across 6 categories — ranking them by relevance, rating, and value.</p>
+    <div class="stats-row">
+      <div class="stat-pill"><span class="stat-num" id="statProducts">40</span><span class="stat-lbl">Products</span></div>
+      <div class="stat-pill"><span class="stat-num" id="statVocab">677</span><span class="stat-lbl">NLP Tokens</span></div>
+      <div class="stat-pill"><span class="stat-num" id="statDeals">20</span><span class="stat-lbl">Live Deals</span></div>
+      <div class="stat-pill"><span class="stat-num" id="statCats">6</span><span class="stat-lbl">Categories</span></div>
+      <div class="stat-pill"><span class="stat-num" id="statRating">4.68★</span><span class="stat-lbl">Avg Rating</span></div>
+    </div>
+    <div class="pref-setup">
+      <p class="pref-label">What are you interested in? <span class="pref-hint">(select multiple)</span></p>
+      <div class="pref-chips">
+        <button class="chip" data-pref="electronics">🖥 Electronics</button>
+        <button class="chip" data-pref="fashion">👗 Fashion</button>
+        <button class="chip" data-pref="books">📚 Books</button>
+        <button class="chip" data-pref="sports">🏃 Sports &amp; Fitness</button>
+        <button class="chip" data-pref="home">🏠 Home &amp; Kitchen</button>
+        <button class="chip" data-pref="travel">✈ Travel</button>
+        <button class="chip" data-pref="audio">🎧 Audio</button>
+        <button class="chip" data-pref="productivity">💼 Productivity</button>
+        <button class="chip" data-pref="photography">📷 Photography</button>
+        <button class="chip" data-pref="running">👟 Running</button>
+      </div>
+      <div class="hero-search-row">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search products, brands, categories…" autocomplete="off" />
+          <button class="search-clear" id="searchClear" style="display:none" aria-label="Clear search">✕</button>
+        </div>
+        <div class="budget-wrap">
+          <span class="currency-symbol">€</span>
+          <input type="number" id="budgetInput" class="budget-input" placeholder="Budget" min="1" max="99999" step="0.01" />
+        </div>
+        <button class="btn-primary" id="getRecsBtn">Get AI Recommendations</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── AI STATUS BAR ───────────────────────────────────── -->
+<div class="ai-bar" id="aiBar" style="display:none">
+  <span class="ai-dot"></span>
+  <span id="aiBarText">AI is analysing your preferences…</span>
+</div>
+
+<!-- ─── PRODUCTS ────────────────────────────────────────── -->
+<section class="section" id="productsSection">
+  <div class="ai-insight-panel" id="aiInsightPanel" style="display:none">
+    <div class="ai-insight-icon">🤖</div>
+    <div class="ai-insight-body">
+      <p class="ai-insight-title" id="aiInsightTitle">AI Recommendation Engine Active</p>
+      <p class="ai-insight-text" id="aiInsightText">Ranked by TF-IDF cosine similarity + rating quality score + deal boost</p>
+    </div>
+    <div class="ai-insight-badges" id="aiInsightBadges"></div>
+  </div>
+  <div class="section-header">
+    <div>
+      <h2 class="section-title" id="sectionTitle">Top Picks Right Now</h2>
+      <p class="section-sub" id="sectionSub">Best-rated products across all categories</p>
+    </div>
+    <div class="filter-row">
+      <select id="categoryFilter" class="filter-select">
+        <option value="all">All Categories</option>
+        <option value="electronics">🖥 Electronics</option>
+        <option value="fashion">👗 Fashion</option>
+        <option value="books">📚 Books</option>
+        <option value="sports">🏃 Sports</option>
+        <option value="home">🏠 Home</option>
+        <option value="travel">✈ Travel</option>
+      </select>
+      <select id="sortFilter" class="filter-select">
+        <option value="ai">AI Ranked</option>
+        <option value="price_asc">Price: Low → High</option>
+        <option value="price_desc">Price: High → Low</option>
+        <option value="rating">Top Rated</option>
+        <option value="discount">Biggest Discount</option>
+      </select>
+    </div>
+  </div>
+  <div class="product-grid" id="productGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <p class="empty-icon">🔍</p>
+    <p class="empty-title">No products found</p>
+    <p class="empty-sub">Try a different search term, category, or increase your budget.</p>
+  </div>
+</section>
+
+<!-- ─── DEALS ───────────────────────────────────────────── -->
+<section class="section" id="dealsSection" style="display:none">
+  <div class="deals-hero-banner">
+    <div>
+      <h2 class="section-title">🔥 Today's Best Deals</h2>
+      <p class="section-sub">AI-sorted by discount value — updated daily</p>
+    </div>
+    <div class="deals-meta" id="dealsMeta"></div>
+  </div>
+  <div class="product-grid" id="dealsGrid"></div>
+</section>
+
+<!-- ─── BUDGET AI ────────────────────────────────────────── -->
+<section class="section" id="budgetSection" style="display:none">
+  <div class="budget-hero">
+    <div class="budget-hero-text">
+      <h2 class="section-title">💰 Budget Optimiser</h2>
+      <p class="section-sub">The AI greedily selects the best-value combination of products within your budget — maximising <em>rating × (1 + discount) / price</em> across all items.</p>
+    </div>
+    <div class="budget-algo-note">
+      <span class="algo-badge">Algorithm</span>
+      Greedy value-score: <code>score = (rating × (1 + discount%)) ÷ price</code>
+    </div>
+    <div class="budget-form">
+      <div class="budget-form-row">
+        <div class="form-group">
+          <label for="budgetOptInput">Total Budget (€)</label>
+          <div class="input-with-symbol">
+            <span class="currency-symbol">€</span>
+            <input type="number" id="budgetOptInput" class="form-input" placeholder="e.g. 300" min="1" max="99999" step="0.01" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="budgetPrefsInput">Preferences (comma-separated, optional)</label>
+          <input type="text" id="budgetPrefsInput" class="form-input" placeholder="e.g. electronics, fitness, books" autocomplete="off" />
+        </div>
+      </div>
+      <button class="btn-primary" id="optimiseBudgetBtn">✦ &nbsp;Optimise My Budget</button>
+    </div>
+  </div>
+  <div id="budgetResults" style="display:none">
+    <div class="budget-summary" id="budgetSummary"></div>
+    <h3 class="budget-results-title">AI Selected Products</h3>
+    <div class="product-grid" id="budgetGrid"></div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ────────────────────────────────────── -->
+<section class="section" id="howSection" style="display:none">
+  <div class="how-header">
+    <h2 class="section-title">🧠 How the AI Works</h2>
+    <p class="section-sub">A transparent look at the recommendation engine powering ShopAI</p>
+  </div>
+  <div class="how-grid">
+    <div class="how-card"><div class="how-num">01</div><div class="how-icon">📝</div><h3 class="how-title">Product Tokenisation</h3><p class="how-desc">Every product's name, description, category, and tags are broken into tokens. A shared vocabulary of <strong id="vocabCount">677</strong> unique terms is built across all 40 products.</p><div class="how-code">tokens = name_words + desc_words + tags + [category]</div></div>
+    <div class="how-card"><div class="how-num">02</div><div class="how-icon">📊</div><h3 class="how-title">TF-IDF Vectorisation</h3><p class="how-desc">Each product becomes a numerical vector. TF rewards products rich in relevant terms. IDF penalises common words that appear everywhere.</p><div class="how-code">TF-IDF(t,d) = TF(t,d) × log((N+1)/(df(t)+1)) + 1</div></div>
+    <div class="how-card"><div class="how-num">03</div><div class="how-icon">🎯</div><h3 class="how-title">Cosine Similarity</h3><p class="how-desc">Your preferences are converted to the same vector space. Similarity is the cosine angle between your preference vector and each product vector.</p><div class="how-code">sim(A,B) = (A·B) / (‖A‖ × ‖B‖)</div></div>
+    <div class="how-card"><div class="how-num">04</div><div class="how-icon">⚡</div><h3 class="how-title">Hybrid Scoring</h3><p class="how-desc">Raw similarity is blended with quality signals. Deals get a 15% uplift ensuring high-relevance AND high-quality products rank at the top.</p><div class="how-code">score = sim×0.6 + (rating/5)×0.4 × (1.15 if deal)</div></div>
+    <div class="how-card"><div class="how-num">05</div><div class="how-icon">🧩</div><h3 class="how-title">Session Learning</h3><p class="how-desc">Every time you add a product to your cart, its tags are appended to your preference profile. Future recommendations improve automatically.</p><div class="how-code">session["liked_tags"] += product.tags</div></div>
+    <div class="how-card"><div class="how-num">06</div><div class="how-icon">💡</div><h3 class="how-title">Budget Optimisation</h3><p class="how-desc">A greedy algorithm sorts all affordable candidates by value score and selects items until your budget is exhausted. Runs in O(n log n).</p><div class="how-code">value = (rating × (1 + discount)) / price</div></div>
+  </div>
+  <div class="how-live-demo">
+    <h3 class="how-demo-title">Live Similarity Demo</h3>
+    <p class="how-demo-sub">Type any keyword and see real-time AI similarity scores from the engine</p>
+    <div class="demo-row">
+      <input type="text" id="demoInput" class="form-input" placeholder="e.g. noise cancelling, running shoes, coffee…" autocomplete="off" />
+    </div>
+    <div id="demoResults" class="demo-results"></div>
+  </div>
+</section>
+
+<!-- ─── CART ────────────────────────────────────────────── -->
+<section class="section" id="cartSection" style="display:none">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">🛒 Your Cart</h2>
+      <p class="section-sub" id="cartSubtitle">0 items</p>
+    </div>
+    <button class="btn-ghost" id="clearCartBtn">Clear All</button>
+  </div>
+  <div id="cartItems"></div>
+  <div class="cart-empty" id="cartEmpty" style="display:none">
+    <p class="empty-icon">🛒</p>
+    <p class="empty-title">Your cart is empty</p>
+    <p class="empty-sub">Browse products and add them here. The AI remembers your picks to improve future recommendations.</p>
+  </div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-totals">
+      <div class="cart-total-row"><span>Subtotal</span><span id="cartSubtotal">€0.00</span></div>
+      <div class="cart-total-row savings"><span>💚 You Save</span><span id="cartSavings">€0.00</span></div>
+      <div class="cart-total-row total"><span>Total</span><span id="cartTotal">€0.00</span></div>
+    </div>
+    <button class="btn-primary btn-full" id="checkoutBtn">Proceed to Checkout</button>
+  </div>
+</section>
+
+<!-- ─── FOOTER ──────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-icon">✦</span>
+      <span class="footer-logo-text">ShopAI</span>
+    </div>
+    <p class="footer-credit">Created by <strong>Dawood Ismail</strong> &mdash; Student of <span class="footer-uni">GISMA University of Applied Sciences</span></p>
+    <p class="footer-sub">AI-Powered Shopping Recommendations &bull; Bachelor's Assessment Project &bull; Built with Python, Flask &amp; TF-IDF NLP</p>
+  </div>
+</footer>
+
+<!-- ─── PRODUCT MODAL ───────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" role="dialog" aria-modal="true">
+  <div class="modal">
+    <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-similar" id="modalSimilar"></div>
+  </div>
+</div>
+
+<!-- ─── CHECKOUT MODAL ──────────────────────────────────── -->
+<div class="modal-overlay" id="checkoutOverlay" style="display:none" role="dialog" aria-modal="true" aria-label="Checkout">
+  <div class="modal checkout-modal">
+
+    <!-- Step indicator -->
+    <div class="co-steps" id="coSteps">
+      <div class="co-step active" id="coStepDot1">
+        <span class="co-step-num">1</span><span class="co-step-lbl">Delivery</span>
+      </div>
+      <div class="co-step-line" id="coLine1"></div>
+      <div class="co-step" id="coStepDot2">
+        <span class="co-step-num">2</span><span class="co-step-lbl">Payment</span>
+      </div>
+      <div class="co-step-line" id="coLine2"></div>
+      <div class="co-step" id="coStepDot3">
+        <span class="co-step-num">3</span><span class="co-step-lbl">Confirm</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: Delivery -->
+    <div class="co-panel" id="coPanel1">
+      <h2 class="co-title">Delivery Details</h2>
+      <p class="co-sub">Where should we send your order?</p>
+      <div class="co-form">
+        <div class="co-row-2">
+          <div class="form-group">
+            <label for="coFirstName">First Name *</label>
+            <input type="text" id="coFirstName" class="form-input" placeholder="Dawood" />
+            <span class="field-err" id="errFirstName"></span>
+          </div>
+          <div class="form-group">
+            <label for="coLastName">Last Name *</label>
+            <input type="text" id="coLastName" class="form-input" placeholder="Ismail" />
+            <span class="field-err" id="errLastName"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="coEmail">Email Address *</label>
+          <input type="email" id="coEmail" class="form-input" placeholder="dawood@example.com" />
+          <span class="field-err" id="errEmail"></span>
+        </div>
+        <div class="form-group">
+          <label for="coPhone">Phone Number</label>
+          <input type="tel" id="coPhone" class="form-input" placeholder="+49 123 456 7890" />
+        </div>
+        <div class="form-group">
+          <label for="coAddress">Street Address *</label>
+          <input type="text" id="coAddress" class="form-input" placeholder="Hardenbergstrasse 9" />
+          <span class="field-err" id="errAddress"></span>
+        </div>
+        <div class="co-row-3">
+          <div class="form-group">
+            <label for="coCity">City *</label>
+            <input type="text" id="coCity" class="form-input" placeholder="Berlin" />
+            <span class="field-err" id="errCity"></span>
+          </div>
+          <div class="form-group">
+            <label for="coPostal">Postal Code *</label>
+            <input type="text" id="coPostal" class="form-input" placeholder="10623" />
+            <span class="field-err" id="errPostal"></span>
+          </div>
+          <div class="form-group">
+            <label for="coCountry">Country</label>
+            <select id="coCountry" class="form-input">
+              <option value="DE">Germany</option>
+              <option value="AT">Austria</option>
+              <option value="CH">Switzerland</option>
+              <option value="FR">France</option>
+              <option value="NL">Netherlands</option>
+              <option value="BE">Belgium</option>
+              <option value="ES">Spain</option>
+              <option value="IT">Italy</option>
+              <option value="PL">Poland</option>
+              <option value="UK">United Kingdom</option>
+              <option value="US">United States</option>
+              <option value="PK">Pakistan</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="co-shipping-opts">
+          <p class="co-shipping-title">Shipping Method</p>
+          <label class="co-ship-opt">
+            <input type="radio" name="shipping" value="standard" checked />
+            <span class="co-ship-info"><span class="co-ship-name">Standard Delivery</span><span class="co-ship-eta">5–7 business days</span></span>
+            <span class="co-ship-price">Free</span>
+          </label>
+          <label class="co-ship-opt">
+            <input type="radio" name="shipping" value="express" />
+            <span class="co-ship-info"><span class="co-ship-name">Express Delivery</span><span class="co-ship-eta">2–3 business days</span></span>
+            <span class="co-ship-price">€9.99</span>
+          </label>
+          <label class="co-ship-opt">
+            <input type="radio" name="shipping" value="next_day" />
+            <span class="co-ship-info"><span class="co-ship-name">Next Day Delivery</span><span class="co-ship-eta">Order before 2 PM</span></span>
+            <span class="co-ship-price">€19.99</span>
+          </label>
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="btn-ghost" id="coCancelBtn">Cancel</button>
+        <button class="btn-primary" id="coStep1NextBtn">Continue to Payment →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Payment -->
+    <div class="co-panel" id="coPanel2" style="display:none">
+      <h2 class="co-title">Payment Details</h2>
+      <p class="co-sub">Your payment is secured with 256-bit SSL encryption.</p>
+      <div class="co-pay-methods">
+        <button class="co-pay-tab active" id="tabCard">💳 Card</button>
+        <button class="co-pay-tab" id="tabPaypal">🅿 PayPal</button>
+        <button class="co-pay-tab" id="tabKlarna">🅺 Klarna</button>
+      </div>
+      <!-- Card -->
+      <div id="payCard">
+        <div class="co-form">
+          <div class="form-group">
+            <label for="coCardName">Cardholder Name *</label>
+            <input type="text" id="coCardName" class="form-input" placeholder="DAWOOD ISMAIL" style="text-transform:uppercase" />
+            <span class="field-err" id="errCardName"></span>
+          </div>
+          <div class="form-group">
+            <label for="coCardNum">Card Number *</label>
+            <div class="card-num-wrap">
+              <input type="text" id="coCardNum" class="form-input" placeholder="0000  0000  0000  0000" maxlength="19" inputmode="numeric" />
+              <div class="card-type-badges"><span id="badgeVisa" class="card-type-badge">VISA</span><span id="badgeMC" class="card-type-badge faded">MC</span><span id="badgeAmex" class="card-type-badge faded">AMEX</span></div>
+            </div>
+            <span class="field-err" id="errCardNum"></span>
+          </div>
+          <div class="co-row-2">
+            <div class="form-group">
+              <label for="coExpiry">Expiry *</label>
+              <input type="text" id="coExpiry" class="form-input" placeholder="MM / YY" maxlength="7" inputmode="numeric" />
+              <span class="field-err" id="errExpiry"></span>
+            </div>
+            <div class="form-group">
+              <label for="coCVV">CVV * <span class="co-cvv-hint">(3–4 digits)</span></label>
+              <input type="text" id="coCVV" class="form-input" placeholder="•••" maxlength="4" inputmode="numeric" />
+              <span class="field-err" id="errCVV"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- PayPal -->
+      <div id="payPaypal" style="display:none">
+        <div class="co-alt-pay-box">
+          <div class="co-alt-icon">🅿</div>
+          <p class="co-alt-title">Pay with PayPal</p>
+          <p class="co-alt-desc">You'll be redirected to PayPal to complete your payment securely.</p>
+        </div>
+      </div>
+      <!-- Klarna -->
+      <div id="payKlarna" style="display:none">
+        <div class="co-alt-pay-box">
+          <div class="co-alt-icon">🅺</div>
+          <p class="co-alt-title">Pay in 3 with Klarna</p>
+          <p class="co-alt-desc">Split into 3 interest-free instalments. No fees.</p>
+          <div class="co-klarna-pills" id="klarnaPills"></div>
+        </div>
+      </div>
+      <div class="co-security-note">🔒 &nbsp;Payments processed securely. We never store raw card data.</div>
+      <div class="co-actions">
+        <button class="btn-ghost" id="coStep2BackBtn">← Back</button>
+        <button class="btn-primary" id="coStep2NextBtn">Review Order →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Review & Confirm -->
+    <div class="co-panel" id="coPanel3" style="display:none">
+      <h2 class="co-title">Review Your Order</h2>
+      <p class="co-sub">Please check everything before placing your order.</p>
+      <div id="coSummary"></div>
+      <div class="co-actions">
+        <button class="btn-ghost" id="coStep3BackBtn">← Back</button>
+        <button class="btn-primary" id="coPlaceBtn">Place Order</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Success -->
+    <div class="co-panel" id="coPanel4" style="display:none">
+      <div class="co-success">
+        <div class="co-success-anim">
+          <div class="co-success-ring"></div>
+          <div class="co-success-check">✓</div>
+        </div>
+        <h2 class="co-success-title">Order Placed!</h2>
+        <p class="co-success-sub">Thank you! A confirmation will be sent to <strong id="coSuccessEmail"></strong></p>
+        <div class="co-order-ref">Order Reference: <strong id="coOrderRef"></strong></div>
+        <div id="coSuccessItems" class="co-success-items"></div>
+        <div id="coSuccessTotal" class="co-success-total"></div>
+        <button class="btn-primary btn-full" id="coBackToShopBtn">Continue Shopping</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── TOAST ───────────────────────────────────────────── -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
