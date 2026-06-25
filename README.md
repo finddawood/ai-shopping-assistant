@@ -176,6 +176,4 @@ This project was developed as a Bachelor's-level assessment for the topic **"AI-
 
 ---
 
-## 📄 License
 
-MIT License — free to use for academic and personal projects.
